@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'workshop_v8_2_zip.part*.b64'
+      - 'IMPORT_READY'
 
 permissions:
   contents: write
@@ -29,8 +29,8 @@ jobs:
           unzip -q /tmp/workshop-v8.2.zip -d /tmp/workshop-v8.2
           SOURCE_DIR="$(find /tmp/workshop-v8.2 -mindepth 1 -maxdepth 1 -type d | head -n 1)"
           test -n "$SOURCE_DIR"
-          rsync -a --delete-excluded "$SOURCE_DIR/" ./
-          rm -f workshop_v8_2_zip.part*.b64
+          rsync -a "$SOURCE_DIR/" ./
+          rm -f workshop_v8_2_zip.part*.b64 IMPORT_READY
           rm -f .github/workflows/bootstrap-import.yml
 
       - name: Commit imported workshop
