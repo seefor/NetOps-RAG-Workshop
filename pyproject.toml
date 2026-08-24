@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netops-rag-workshop"
+version = "0.8.2"
+description = "A hands-on Network Operations RAG workshop stack with Ollama-first local execution and OpenAI/Anthropic provider adapters."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "chromadb>=0.5.0",
+  "python-dotenv>=1.0.1",
+  "requests>=2.32.0",
+  "streamlit>=1.37.0",
+  "openai>=1.40.0",
+  "anthropic>=0.34.0",
+  "pydantic>=2.8.0",
+  "pyyaml>=6.0.2",
+  "rich>=13.7.1",
+]
+
+
+[project.optional-dependencies]
+hermes = [
+  "mcp>=2.0,<3",
+]
+
+[project.scripts]
+netops-rag = "netops_rag.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100

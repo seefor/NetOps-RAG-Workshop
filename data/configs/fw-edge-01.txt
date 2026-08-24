@@ -1,0 +1,17 @@
+---
+device_name: fw-edge-01
+site: atlanta-dc
+role: perimeter-firewall
+vendor: paloalto
+platform: pan-os
+service: firewall
+status: active
+environment: production
+source_authority: device_snapshot
+snapshot_date: 2026-07-28
+---
+set rulebase security rules allow-web from untrust to dmz source any destination web-vip application ssl service application-default action allow log-end yes
+set rulebase security rules vendor-support-temp from untrust to trust source 198.51.100.77 destination 10.10.130.45 application any service any action allow log-end no
+set rulebase security rules deny-unmatched from any to any source any destination any application any service any action deny log-end yes
+set address web-vip ip-netmask 203.0.113.50/32
+set address app-server-01 ip-netmask 10.10.130.45/32

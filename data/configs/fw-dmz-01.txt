@@ -1,0 +1,15 @@
+---
+device_name: fw-dmz-01
+site: atlanta-dc
+role: segmentation-firewall
+vendor: paloalto
+platform: pan-os
+service: firewall
+status: active
+environment: production
+source_authority: device_snapshot
+snapshot_date: 2026-07-28
+---
+set rulebase security rules app-to-db from app-zone to db-zone source app-servers destination db-cluster application ssl service tcp-5432 action allow log-end yes
+set rulebase security rules legacy-monitoring from monitoring to any source monitor-old destination any application any service any action allow log-end yes
+set rulebase security rules deny-all from any to any source any destination any application any service any action deny log-end yes

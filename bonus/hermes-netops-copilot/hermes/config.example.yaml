@@ -1,0 +1,10 @@
+# v8.2 scope example
+#
+# Profile-local settings (netops-workshop) include cwd + skills.
+# MCP is registered globally by scripts/register_global_mcp.py in the tested build.
+
+cwd: /absolute/path/to/netops-rag-workshop-stack
+skills:
+  directories:
+    - /absolute/path/to/netops-rag-workshop-stack/bonus/hermes-netops-copilot/hermes/skills
+  write_approval: true

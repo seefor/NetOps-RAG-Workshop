@@ -1,0 +1,148 @@
+{
+  "id": "branch-ipsec",
+  "title": "Branch IPsec tunnel down after identity certificate expiry",
+  "service": "ipsec",
+  "site": [
+    "branch-01",
+    "atlanta-dc"
+  ],
+  "observed_at": "2026-07-31T21:05:00-04:00",
+  "reported_symptom": "Branch users cannot reach Atlanta applications. The WAN circuit is reported up.",
+  "safety": "Synthetic and read-only. No production device is connected.",
+  "devices": {
+    "branch-r1": {
+      "services": [
+        "ipsec"
+      ],
+      "facts": {
+        "site": "branch-01",
+        "role": "branch-router",
+        "vendor": "cisco",
+        "platform": "ios-xe",
+        "version": "17.9.5",
+        "uptime": "62 days",
+        "management_state": "reachable",
+        "clock_state": "synchronized"
+      },
+      "ipsec": {
+        "peer": "203.0.113.10",
+        "ikev2_state": "AUTH_FAILED",
+        "ipsec_sa_state": "DOWN",
+        "last_success": "2026-07-31T19:58:42-04:00",
+        "failure_reason": "Local identity certificate expired at 2026-07-31T20:00:00-04:00"
+      },
+      "interfaces": [
+        {
+          "name": "GigabitEthernet0/0",
+          "description": "WAN",
+          "admin_state": "up",
+          "oper_state": "up",
+          "address": "198.51.100.66/30",
+          "input_errors": 0,
+          "crc": 0
+        },
+        {
+          "name": "Tunnel100",
+          "description": "IPSEC_TO_ATLANTA",
+          "admin_state": "up",
+          "oper_state": "down",
+          "address": "10.254.1.2/30"
+        }
+      ],
+      "routes": [
+        {
+          "destination": "203.0.113.10/32",
+          "protocol": "static",
+          "next_hop": "198.51.100.65",
+          "interface": "GigabitEthernet0/0",
+          "selected": true
+        }
+      ],
+      "logs": [
+        {
+          "timestamp": "2026-07-31T20:01:03-04:00",
+          "severity": "error",
+          "message": "%IKEV2-3-NEG_ABORT: Authentication failed for peer 203.0.113.10"
+        },
+        {
+          "timestamp": "2026-07-31T20:01:03-04:00",
+          "severity": "error",
+          "message": "%PKI-3-CERTIFICATE_INVALID_EXPIRED: identity certificate BRANCH-R1-ID expired"
+        },
+        {
+          "timestamp": "2026-07-31T20:01:04-04:00",
+          "severity": "warning",
+          "message": "%LINEPROTO-5-UPDOWN: Line protocol on Interface Tunnel100, changed state to down"
+        }
+      ],
+      "config_diff": {
+        "drift_detected": false,
+        "baseline": "data/configs/branch-r1.cfg",
+        "current_revision": "mock-live-2026-07-31T21:05",
+        "changes": [],
+        "assessment": "No configuration drift. Failure is related to certificate validity, not a config edit."
+      }
+    },
+    "fw-edge-01": {
+      "services": [
+        "ipsec"
+      ],
+      "facts": {
+        "site": "atlanta-dc",
+        "role": "edge-firewall",
+        "vendor": "palo-alto",
+        "platform": "pan-os",
+        "version": "11.1.4",
+        "uptime": "44 days",
+        "management_state": "reachable",
+        "clock_state": "synchronized"
+      },
+      "ipsec": {
+        "peer": "198.51.100.66",
+        "ike_gateway_state": "down",
+        "ipsec_tunnel_state": "down",
+        "last_error": "Peer certificate rejected: expired",
+        "local_certificate_valid": true
+      },
+      "interfaces": [
+        {
+          "name": "ethernet1/1",
+          "description": "INTERNET_EDGE",
+          "admin_state": "up",
+          "oper_state": "up",
+          "address": "203.0.113.10/30",
+          "input_errors": 0,
+          "crc": 0
+        }
+      ],
+      "routes": [
+        {
+          "destination": "198.51.100.66/32",
+          "protocol": "static",
+          "next_hop": "203.0.113.9",
+          "interface": "ethernet1/1",
+          "selected": true
+        }
+      ],
+      "logs": [
+        {
+          "timestamp": "2026-07-31T20:01:02-04:00",
+          "severity": "high",
+          "message": "ike-nego-p2-fail: peer 198.51.100.66 certificate validation failed: expired"
+        },
+        {
+          "timestamp": "2026-07-31T20:01:05-04:00",
+          "severity": "medium",
+          "message": "tunnel branch-r1 changed state active -> down"
+        }
+      ],
+      "config_diff": {
+        "drift_detected": false,
+        "baseline": "data/configs/fw-edge-01.txt",
+        "current_revision": "mock-live-2026-07-31T21:05",
+        "changes": [],
+        "assessment": "No configuration drift detected on the central firewall."
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "bgp-policy-drift",
+  "title": "BGP session failure after unapproved Junos policy edit",
+  "service": "bgp",
+  "site": ["atlanta-dc", "new-york-dc"],
+  "observed_at": "2026-07-31T20:45:00-04:00",
+  "reported_symptom": "The eBGP session between atl-core-r1 and nyc-edge-r1 is down. The team suspects CHG-1234.",
+  "safety": "Synthetic and read-only. No production device is connected.",
+  "devices": {
+    "atl-core-r1": {
+      "services": ["bgp"],
+      "facts": {"site":"atlanta-dc","role":"core","vendor":"cisco","platform":"ios-xe","version":"17.12.4","uptime":"31 days","management_state":"reachable"},
+      "bgp": {"local_as":65001,"router_id":"10.255.0.1","peers":[{"neighbor":"198.51.100.2","remote_as":65020,"state":"Active","uptime":"00:00:00","last_reset":"Peer closed the session","prefixes_received":0}]},
+      "interfaces": [{"name":"GigabitEthernet0/1","description":"TRANSIT_TO_NYC-EDGE-R1","admin_state":"up","oper_state":"up","address":"198.51.100.1/30","input_errors":0,"crc":0},{"name":"Loopback0","description":"ROUTER-ID","admin_state":"up","oper_state":"up","address":"10.255.0.1/32"}],
+      "routes": [{"destination":"198.51.100.2/32","protocol":"connected","next_hop":"direct","interface":"GigabitEthernet0/1","selected":true}],
+      "logs": [{"timestamp":"2026-07-31T20:41:13-04:00","severity":"warning","message":"%BGP-5-ADJCHANGE: neighbor 198.51.100.2 Down BGP Notification received"},{"timestamp":"2026-07-31T20:42:02-04:00","severity":"info","message":"ICMP reachability to 198.51.100.2 successful"},{"timestamp":"2026-07-31T20:44:35-04:00","severity":"warning","message":"%BGP-5-ADJCHANGE: neighbor 198.51.100.2 Down Peer closed the session"}],
+      "config_diff": {"drift_detected":false,"baseline":"data/configs/atl-core-r1.cfg","current_revision":"mock-live-2026-07-31T20:45","changes":[],"assessment":"No drift from the approved workshop snapshot."}
+    },
+    "nyc-edge-r1": {
+      "services": ["bgp"],
+      "facts": {"site":"new-york-dc","role":"edge","vendor":"juniper","platform":"junos","version":"23.4R2-S2","uptime":"18 days","management_state":"reachable"},
+      "bgp": {"local_as":65020,"router_id":"10.255.20.1","peers":[{"neighbor":"198.51.100.1","remote_as":65001,"state":"Active","uptime":"00:00:00","last_error":"Import policy IMPORT-ATL evaluation failed","prefixes_received":0}]},
+      "interfaces": [{"name":"ge-0/0/0.0","description":"TRANSIT_TO_ATL-CORE-R1","admin_state":"up","oper_state":"up","address":"198.51.100.2/30","input_errors":0,"crc":0},{"name":"lo0.0","description":"ROUTER-ID","admin_state":"up","oper_state":"up","address":"10.255.20.1/32"}],
+      "routes": [{"destination":"198.51.100.1/32","protocol":"direct","next_hop":"direct","interface":"ge-0/0/0.0","selected":true}],
+      "logs": [{"timestamp":"2026-07-31T20:40:51-04:00","severity":"error","message":"rpd[4182]: RPD_POLICY_ERROR: policy IMPORT-ATL term approved references undefined prefix-list ATL-IN-TEMP"},{"timestamp":"2026-07-31T20:41:13-04:00","severity":"warning","message":"rpd[4182]: bgp_event: peer 198.51.100.1 moved Established -> Idle"},{"timestamp":"2026-07-31T20:43:57-04:00","severity":"error","message":"mgd[9021]: UI_COMMIT: user netadmin performed manual candidate commit outside automation account"}],
+      "config_diff": {"drift_detected":true,"baseline":"data/configs/nyc-edge-r1.conf","current_revision":"mock-live-2026-07-31T20:45","change_control_match":false,"changes":[{"section":"policy-options policy-statement IMPORT-ATL term approved","before":"from prefix-list ATL-IN;","after":"from prefix-list ATL-IN-TEMP;"}],"assessment":"The live policy references ATL-IN-TEMP, which is not defined. No approved change record matches this edit."}
+    }
+  }
+}
