@@ -20,10 +20,12 @@ dependencies = [
   "rich>=13.7.1",
 ]
 
-
 [project.optional-dependencies]
 hermes = [
   "mcp>=2.0,<3",
+]
+live-network = [
+  "netmiko>=4.4.0",
 ]
 
 [project.scripts]
