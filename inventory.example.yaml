@@ -1,0 +1,46 @@
+devices:
+  - name: atl-core-r1
+    host: 10.10.10.11
+    device_type: cisco_ios
+    site: atlanta-dc
+    role: core
+    service: bgp
+    environment: production
+    credential_profile: NETOPS
+    enable: true
+
+  - name: nyc-edge-r1
+    host: 10.20.20.11
+    device_type: juniper_junos
+    site: new-york-dc
+    role: edge
+    service: bgp
+    environment: production
+    credential_profile: NETOPS
+
+  - name: atl-dist-sw1
+    host: 10.10.10.21
+    device_type: arista_eos
+    site: atlanta-dc
+    role: distribution
+    service: switching
+    environment: production
+    credential_profile: NETOPS
+
+  - name: atl-fw1
+    host: 10.10.10.31
+    device_type: paloalto_panos
+    site: atlanta-dc
+    role: firewall
+    service: firewall
+    environment: production
+    credential_profile: NETOPS
+
+  - name: atl-lb1
+    host: 10.10.10.41
+    device_type: f5_tmsh
+    site: atlanta-dc
+    role: load-balancer
+    service: load-balancing
+    environment: production
+    credential_profile: NETOPS
