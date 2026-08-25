@@ -9,5 +9,10 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Live-network collection: keep credentials/inventory and real configs out of Git.
+inventory.yaml
+data/configs/live/
+
 bonus/hermes-netops-copilot/hermes/generated-config.yaml
 bonus/hermes-netops-copilot/**/__pycache__/
