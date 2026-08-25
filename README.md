@@ -126,6 +126,33 @@ Use `instructor/PRESENTER_SCRIPT.md` for what to present and say, and `instructo
 - `scenarios/SCENARIO_CARDS.md` — group and capstone exercises
 - `DATASET_GUIDE.md` — source taxonomy and intended traps
 
+## Optional live multi-vendor config ingestion
+
+Install the live-network extra:
+
+```bash
+python -m pip install -e ".[live-network]"
+```
+
+Create a local inventory from the safe example:
+
+```bash
+cp inventory.example.yaml inventory.yaml
+```
+
+Then collect read-only running configurations and ingest the current snapshots into the same Chroma collection used by the workshop:
+
+```bash
+export NETOPS_USERNAME="your-username"
+export NETOPS_PASSWORD="your-password"
+
+python scripts/collect_device_configs.py \
+  --inventory inventory.yaml \
+  --ingest
+```
+
+The collector writes workshop-style YAML metadata, keeps one indexed current snapshot per device, and reuses the existing `netops_rag.ingest` pipeline for chunking, embeddings, and Chroma writes. Real inventories and collected running configs are excluded from Git by default. See `LIVE_CONFIG_INGEST.md` for the full workflow and safety boundary.
+
 ## Important boundary
 
 RAG is useful for finding, correlating, explaining, and citing operational knowledge. It is not a deterministic configuration parser, live-state collector, authorization system, or change executor. Pair it with NetBox, pyATS, Batfish, NAPALM, vendor APIs, authenticated tools, change control, and human approval for production use.
