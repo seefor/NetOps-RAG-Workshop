@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import getpass
 import os
-import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -192,16 +191,17 @@ def write_snapshot(
     current_dir: Path,
     history_dir: Path | None,
 ) -> Path:
-    """Write a fixed 'current' source file plus an optional timestamped history copy."""
-    current_dir.mkdir(parents=True, exist_ok=True)
-    current_path = current_dir / f"{device_name}{extension}"
+    """Write one fixed current source per device plus an optional history copy."""
+    device_current_dir = current_dir / device_name
+    device_current_dir.mkdir(parents=True, exist_ok=True)
+    current_path = device_current_dir / f"{device_name}{extension}"
 
     frontmatter = yaml.safe_dump(metadata, sort_keys=False, default_flow_style=False).strip()
     content = f"---\n{frontmatter}\n---\n{config}\n"
     current_path.write_text(content, encoding="utf-8")
 
     if history_dir is not None:
-        stamp = str(metadata["snapshot_timestamp"]).replace(":", "").replace("+00:00", "Z")
+        stamp = str(metadata["snapshot_timestamp"]).replace(":", "").replace("+0000", "Z")
         device_history = history_dir / device_name
         device_history.mkdir(parents=True, exist_ok=True)
         (device_history / f"{device_name}-{stamp}{extension}").write_text(content, encoding="utf-8")
@@ -209,19 +209,16 @@ def write_snapshot(
     return current_path
 
 
-def remove_previous_chunks(source_paths: list[Path]) -> None:
-    """Remove previous chunks for the fixed current-source paths before re-ingestion.
+def remove_previous_chunks(source_path: Path) -> None:
+    """Remove previous Chroma chunks for a fixed current-source path before re-ingestion."""
+    collection = get_collection(get_settings())
+    collection.delete(where={"source": source_path.as_posix()})
 
-    The existing workshop chunk IDs include the chunk text. Without this cleanup, a changed
-    running config could leave old chunks behind in Chroma even though the source file was
-    overwritten. This keeps one indexed current snapshot per device while history can remain
-    on disk separately.
-    """
-    settings = get_settings()
-    collection = get_collection(settings)
-    for source_path in source_paths:
-        source = source_path.as_posix()
-        collection.delete(where={"source": source})
+
+def ingest_current_snapshot(source_path: Path) -> int:
+    """Reuse the workshop ingestion pipeline for exactly one successful device."""
+    remove_previous_chunks(source_path)
+    return ingest(source_path.parent, get_settings(), reset=False)
 
 
 def main() -> None:
@@ -235,7 +232,7 @@ def main() -> None:
     parser.add_argument(
         "--ingest",
         action="store_true",
-        help="After collection, ingest current snapshots with the existing workshop pipeline",
+        help="After collection, ingest each successful current snapshot with the workshop pipeline",
     )
     parser.add_argument(
         "--no-history",
@@ -280,22 +277,31 @@ def main() -> None:
                 failures += 1
                 print(f"[FAIL] {name}: {exc}")
 
-    if args.ingest and successes:
-        print("\n[INGEST] Removing previous indexed chunks for collected devices...")
-        remove_previous_chunks(successes)
-        print(f"[INGEST] Using existing NetOps RAG pipeline on {current_dir}...")
-        count = ingest(current_dir, get_settings(), reset=False)
-        print(f"[INGEST] Complete. Indexed {count} current-config chunks.")
+    total_chunks = 0
+    ingest_failures = 0
+    if args.ingest:
+        for source_path in successes:
+            try:
+                print(f"[INGEST] {source_path}")
+                count = ingest_current_snapshot(source_path)
+                total_chunks += count
+                print(f"[INGEST OK] {source_path.name}: {count} chunks")
+            except Exception as exc:
+                ingest_failures += 1
+                print(f"[INGEST FAIL] {source_path}: {exc}")
 
     print("\nCollection summary")
     print(f"  successful devices: {len(successes)}")
-    print(f"  failed devices:     {failures}")
+    print(f"  collection failures:{failures:>3}")
     print(f"  current snapshots:  {current_dir}")
     if history_dir is not None:
         print(f"  history snapshots:  {history_dir}")
     print(f"  Chroma updated:      {'yes' if args.ingest and successes else 'no'}")
+    if args.ingest:
+        print(f"  indexed chunks:      {total_chunks}")
+        print(f"  ingestion failures:  {ingest_failures}")
 
-    if failures:
+    if failures or ingest_failures:
         raise SystemExit(1)
 
 
